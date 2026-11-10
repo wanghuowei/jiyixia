@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>记一下</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:#f5f6f8;color:#1b1f24}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px 100px}
+h1{font-size:19px;margin:0 0 4px}
+.sub{color:#8b929c;font-size:13px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.box{background:#fff;border:1px solid #e7e9ee;border-radius:12px;padding:14px;margin-bottom:12px}
+.status{font-size:13px;color:#5b636e;line-height:1.7}
+.status b{color:#1b1f24}
+.status .file-ok{color:#12a150;font-weight:bold}
+.status .file-warn{color:#d98200;font-weight:bold}
+.status .cloud-ok{color:#3b82f6;font-weight:bold}
+.status .cloud-err{color:#e5484d;font-weight:bold}
+.status .time{font-size:12px;color:#98a0aa;margin-top:4px;}
+textarea{width:100%;border:1px solid #e7e9ee;border-radius:10px;padding:12px;font:inherit;outline:0;resize:vertical;min-height:76px;background:#fff}
+button{font:inherit;cursor:pointer;border:1px solid #e7e9ee;background:#fff;color:#1b1f24;border-radius:8px;padding:6px 12px;touch-action:manipulation}
+button:hover{background:#f2f4f7}
+button.primary{background:#3b82f6;border-color:#3b82f6;color:#fff}
+button.success{background:#12a150;border-color:#12a150;color:#fff}
+button.warn{background:#d98200;border-color:#d98200;color:#fff}
+button.cloud{background:#3b82f6;border-color:#3b82f6;color:#fff}
+button.danger{color:#e5484d;border-color:#f3c6c7}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button{border-radius:999px;padding:4px 12px;font-size:13px;color:#8b929c}
+.tabs button.on{background:#1b1f24;border-color:#1b1f24;color:#fff}
+.list{list-style:none;margin:0;padding:0}
+.item{border-top:1px solid #f0f2f5;padding:12px 0;transition:all 0.2s}
+.item:first-child{border-top:0;padding-top:0}
+.item .content{margin:0 0 8px;white-space:pre-wrap;word-break:break-word}
+.item .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}
+.pill{padding:2px 9px;border-radius:999px;background:#f1f3f6;color:#5b636e}
+.pill.date{background:#f4f5f7;color:#98a0aa}
+.pill.proj{background:#eef4ff;color:#2f6bd6;cursor:pointer}
+.pill.deadline{background:#fff;border:1px solid #e7e9ee;color:#5b636e}
+.pill.tag-static{color:#fff;}
+.pill.tag-select{outline:none;border:1px solid #e7e9ee;background:#fff;font-family:inherit;cursor:pointer;padding:1px 6px;}
+.hide-date .pill.date{display:none}
+.item .actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.item .actions button{padding:2px 8px;font-size:12px;color:#8b929c}
+
+/* 超期标红置顶样式 */
+.item.overdue{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #e5484d;border-radius:8px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(229,72,77,0.1)}
+.item.overdue .pill.deadline{background:#fee2e2;border-color:#fca5a5;color:#dc2626;font-weight:bold}
+.item.overdue .content{color:#991b1b}
+.overdue-warning{font-size:12px;color:#dc2626;font-weight:bold;margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.overdue-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed #fca5a5}
+.btn-complete{background:#12a150 !important;color:#fff !important;border-color:#12a150 !important}
+.btn-void{background:#6b7280 !important;color:#fff !important;border-color:#6b7280 !important}
+.btn-progress{background:#3b82f6 !important;color:#fff !important;border-color:#3b82f6 !important}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-top:1px solid #e7e9ee;display:flex;gap:6px;justify-content:center;padding:10px;flex-wrap:wrap;z-index:10}
+.bar label{font-size:13px;color:#8b929c;display:flex;align-items:center;gap:4px;cursor:pointer}
+.bar label.switch-batch{color:#d98200;font-weight:bold}
+.modal{position:fixed;inset:0;background:rgba(17,24,39,.5);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+.modal.show{display:flex}
+.dialog{background:#fff;border-radius:12px;width:100%;max-width:500px}
+.dialog-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #e7e9ee}
+.dialog-head h3{margin:0;font-size:15px}
+.dialog-body{padding:14px 16px;max-height:65vh;overflow:auto}
+.dialog-foot{padding:12px 16px;border-top:1px solid #e7e9ee;display:flex;justify-content:flex-end;gap:8px}
+.trow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #f0f2f5}
+.trow:last-child{border-bottom:0}
+.trow input[type=text]{flex:1;border:1px solid #e7e9ee;border-radius:6px;padding:4px 8px;font:inherit;outline:0}
+.trow input[type=color]{width:32px;height:26px;border:1px solid #e7e9ee;border-radius:6px;padding:0;background:#fff}
+.trow .fixed{font-size:12px;color:#98a0aa}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:#8b929c;margin-bottom:4px}
+.field select,.field input[type=text],.field input[type=date],.field input[type=datetime-local],.field input[type=password]{width:100%;border:1px solid #e7e9ee;border-radius:8px;padding:6px 10px;font:inherit;background:#fff}
+.dates{display:flex;gap:6px;margin-top:6px}
+.dates input{flex:1}
+.tag-checks{display:flex;flex-wrap:wrap;gap:4px 12px}
+.tag-checks label{display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer}
+.tag-checks .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.result{margin-top:10px;border-top:1px solid #e7e9ee;padding-top:10px}
+.result .stat{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.result .stat span{font-size:12px;padding:2px 9px;border-radius:999px}
+.group{margin-bottom:12px}
+.group h4{margin:0 0 4px;font-size:13px;display:flex;align-items:center;gap:6px}
+.group h4 .dot{width:10px;height:10px;border-radius:50%}
+.group ul{margin:0;padding:0;list-style:none}
+.group li{padding:6px 0;border-bottom:1px dashed #e7e9ee;font-size:13px}
+.group li:last-child{border-bottom:0}
+.group li .time{display:block;color:#98a0aa;font-size:11px;margin-bottom:2px}
+.group li .text{white-space:pre-wrap;word-break:break-word}
+.empty{color:#8b929c;text-align:center;padding:16px;font-size:13px}
+
+.proj-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.proj-pill{background:#eef4ff;color:#2f6bd6;padding:4px 10px;border-radius:999px;font-size:13px;cursor:pointer;border:1px solid transparent;transition:all 0.15s}
+.proj-pill:hover{background:#dbeafe;border-color:#bfdbfe}
+.guide{font-size:13px;color:#5b636e;line-height:1.6;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e7e9ee;margin-bottom:14px}
+.guide a{color:#3b82f6;text-decoration:none}
+.guide .warn{color:#e5484d;font-weight:bold;}
+
+/* 针对登录界面的美化 */
+.login-box{text-align:center; padding:20px 10px;}
+.login-box h2{font-size:18px; margin:0 0 10px 0;}
+.login-box p{color:#5b636e; font-size:13px; margin-bottom:20px; line-height:1.6;}
+.btn-login{background:#1b1f24; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-size:15px; font-weight:bold; display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; max-width:300px; margin:0 auto 15px auto; cursor:pointer; text-decoration:none;}
+.btn-login:hover{background:#000;}
+.login-input-row{display:flex; gap:8px;}
+.login-input-row input{flex:1; padding:10px; border:1px solid #e7e9ee; border-radius:8px; font-size:14px; outline:none;}
+.login-input-row input:focus{border-color:#3b82f6;}
+.login-input-row button{padding:0 20px; background:#3b82f6; color:#fff; border:none; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer;}
+.login-input-row button:hover{background:#2563eb;}
+</style>
+</head>
+<body>
+<div class="wrap hide-date" id="wrap">
+  <h1>记一下</h1>
+  <p class="sub">本地存储 · 自动存文件 · 支持多端云同步</p>
+
+  <div class="grid">
+    <div>
+      <div class="box">
+        <div class="status" id="status">加载中…</div>
+        <div class="time" id="syncTime" style="display:none;">最后同步：-</div>
+      </div>
+      <div class="box">
+        <textarea id="input" placeholder="写点什么…例如：登录接口偶尔报错 500 需要排查"></textarea>
+        <div class="row" style="justify-content:space-between;margin-top:8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="inputTagSel" style="padding:4px 8px;border-radius:8px;border:1px solid #e7e9ee;font-size:13px;outline:0;background:#fff"></select>
+            <nav class="tabs" id="tabs" style="margin:0"></nav>
+          </div>
+          <button class="primary" id="btnAdd">记下</button>
+        </div>
+      </div>
+      <div class="box"><ul class="list" id="list"></ul></div>
+    </div>
+
+    <div>
+      <div class="box">
+        <h3 style="margin:0 0 10px;font-size:15px">汇总</h3>
+        <div class="field">
+          <label>时间段</label>
+          <select id="rangeSel">
+            <option value="all">全部</option>
+            <option value="week">本周</option>
+            <option value="month">本月</option>
+            <option value="custom">自定义</option>
+          </select>
+          <div class="dates" id="customDates" style="display:none">
+            <input type="date" id="dateFrom">
+            <input type="date" id="dateTo">
+          </div>
+        </div>
+        
+        <div class="field">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
+            <label style="margin-bottom:0">标签类型（可多选）</label>
+            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:4px; color:#8b929c">
+              <input type="checkbox" id="selectAllTags" checked> 全选
+            </label>
+          </div>
+          <div class="tag-checks" id="tagChecks"></div>
+        </div>
+        
+        <div class="field">
+          <label>项目</label>
+          <select id="projSel"></select>
+        </div>
+        <button class="primary" id="btnSum" style="width:100%">生成汇总</button>
+        <div class="result" id="result"><div class="empty">设置条件后点“生成汇总”</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <button class="cloud" id="btnCloud">☁️ 云同步</button>
+  <button class="success" id="btnAutoSave">本地存文件</button>
+  <button class="warn" id="btnExportTxt">纯文本</button>
+  <button id="btnExport">JSON</button>
+  <button id="btnImport">导入</button>
+  <button id="btnPayload">AI</button>
+  <button id="btnTags">标签</button>
+  <label class="switch-batch"><input type="checkbox" id="batchEdit"> 批量改签</label>
+  <label><input type="checkbox" id="showDate"> 日期</label>
+  <button class="danger" id="btnClear">清空</button>
+  <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+</div>
+
+<!-- 标签管理弹窗 -->
+<div class="modal" id="tagModal">
+  <div class="dialog">
+    <div class="dialog-head"><h3>标签管理</h3><button id="tagClose">关闭</button></div>
+    <div class="dialog-body" id="tagList"></div>
+    <div class="dialog-foot">
+      <button id="tagAdd">+ 添加标签</button>
+      <button class="primary" id="tagSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 云同步/登录弹窗 -->
+<div class="modal" id="cloudModal">
+  <div class="dialog">
+    <div class="dialog-head"><h3>☁️ 账号登录与同步</h3><button id="cloudClose">关闭</button></div>
+    <div class="dialog-body" id="cloudBody">
+      
+      <!-- 状态1：已登录 -->
+      <div id="cloudLoggedIn" style="display:none;">
+        <div class="guide" style="text-align:center; padding:20px;">
+          <div style="font-size:40px; margin-bottom:10px;">✅</div>
+          <b style="font-size:16px; color:#1b1f24;">已成功连接云端</b><br>
+          <span style="color:#8b929c; font-size:12px;">你的数据正在多端自动同步中</span>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:16px">
+          <button class="success" id="cloudPush" style="flex:1">本地覆盖云端</button>
+          <button class="cloud" id="cloudPull" style="flex:1">云端覆盖本地</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="btnCopyConfig" style="flex:1; font-size:12px;">复制恢复码</button>
+          <button class="danger" id="cloudClear" style="flex:1; font-size:12px;">退出登录</button>
+        </div>
+      </div>
+
+      <!-- 状态2：未登录 -->
+      <div id="cloudLoggedOut" style="display:none;">
+        <div class="login-box">
+          <h2>一键连接 GitHub</h2>
+          <p>登录后，数据会自动保存到你的 GitHub 私有空间，手机电脑无缝同步。</p>
+          
+          <a href="https://github.com/settings/tokens/new?scopes=gist&description=JiYiXia_Web_App" target="_blank" class="btn-login">
+            <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            前往授权页面
+          </a>
+          <p style="font-size:12px; color:#8b929c; text-align:left; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:15px;">
+            提示：网页已自动帮你勾选好权限。在打开的页面中直接拉到最底部，点击 <b style="color:#12a150">Generate token</b>，然后复制生成的那串代码粘贴到下方。
+          </p>
+          
+          <div class="login-input-row">
+            <input type="password" id="cloudToken" placeholder="粘贴授权代码 (ghp_...)">
+            <button id="cloudSave">登录</button>
+          </div>
+          <div style="margin-top:12px; text-align:center;">
+             <button id="btnPasteConfig" style="font-size:12px; border:none; background:transparent; color:#3b82f6; cursor:pointer;">使用恢复码登录</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 存储与状态 ================= */
+var KEY_ENTRIES='jiyixia_entries', KEY_TAGS='jiyixia_tags', KEY_CLOUD='jiyixia_cloud_cfg', KEY_LAST_SYNC='jiyixia_last_sync', UNCAT='uncategorized';
+var entries=[], tags=[], filter='all', editingTags=[], batchEditMode = false;
+var cloudConfig = { token: '', gistId: '' };
+var cloudStatus = 'ok'; 
+
+var STATUS_MAP = {
+  'pending': '未完成', 'in_progress': '进行中', 'completed': '已完成', 'voided': '已作废'
+};
+var DEF_TAGS=[
+  {key:'issue',name:'问题',color:'#e5484d'}, {key:'plan',name:'计划',color:'#d98200'},
+  {key:'done',name:'完成',color:'#12a150'}, {key:UNCAT,name:'未分类',color:'#94a3b8'}
+];
+var COLORS=['#e5484d','#d98200','#12a150','#3b82f6','#8b5cf6','#06b6d4','#ec4899','#f97316','#22c55e','#0ea5e9','#a855f7','#14b8a6'];
+
+/* --- IndexedDB 记忆文件句柄 --- */
+function openHandleDB() { 
+  return new Promise(function(res){ 
+    var r=indexedDB.open('jiyixia_fs',1); 
+    r.onupgradeneeded=function(e){ 
+      if(!e.target.result.objectStoreNames.contains('handles')) e.target.result.createObjectStore('handles'); 
+    }; 
+    r.onsuccess=function(e){ res(e.target.result); }; 
+  }); 
+}
+function saveHandleToDB(h) { 
+  return openHandleDB().then(function(db){ 
+    return new Promise(function(res){ 
+      var tx=db.transaction('handles','readwrite'); 
+      tx.objectStore('handles').put(h,'jsonFile'); 
+      tx.oncomplete=function(){ res(); }; 
+    }); 
+  }); 
+}
+function getHandleFromDB() { 
+  return openHandleDB().then(function(db){ 
+    return new Promise(function(res){ 
+      var tx=db.transaction('handles','readonly'); 
+      var req=tx.objectStore('handles').get('jsonFile'); 
+      req.onsuccess=function(){ res(req.result); }; 
+    }); 
+  }); 
+}
+
+/* --- 文件自动保存逻辑 --- */
+var fileHandle=null, needsPermission=null, autoSaveTimer=null, writeTimeout=null;
+
+function initFileHandle() {
+  return getHandleFromDB().then(function(h) {
+    if (!h) return;
+    return h.queryPermission({ mode: 'readwrite' }).then(function(perm) {
+      if (perm === 'granted') {
+        fileHandle = h;
+        startAutoSaveFile();
+      } else if (perm === 'prompt') {
+        needsPermission = h;
+      }
+    });
+  }).catch(function(e){ console.log('读取文件句柄失败', e); });
+}
+
+function startAutoSaveFile() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+  autoSaveTimer = setInterval(function() { writeToFile(true); }, 5 * 60 * 1000);
+}
+
+async function writeToFile(silent) {
+  if (!fileHandle) return;
+  try {
+    var writable = await fileHandle.createWritable();
+    await writable.write(JSON.stringify(exportObj(), null, 2));
+    await writable.close();
+  } catch (err) {
+    console.error('自动保存失败', err);
+    if (err.name === 'NotFoundError') {
+      fileHandle = null;
+      if (autoSaveTimer) clearInterval(autoSaveTimer);
+      renderStatus();
+      if (!silent) alert('保存失败：之前记录的文件可能被移动或删除了。请重新点击「本地存文件」。');
+    }
+  }
+}
+
+async function selectAutoSaveFile() {
+  if (!window.showSaveFilePicker) {
+    alert('当前浏览器不支持自动保存，请使用 Edge 或 Chrome 浏览器。');
+    return;
+  }
+  try {
+    var h = await window.showSaveFilePicker({
+      suggestedName: 'jiyixia_data.json',
+      types: [{ description: 'JSON 文件', accept: {'application/json': ['.json']} }],
+    });
+    fileHandle = h;
+    await saveHandleToDB(h);
+    await writeToFile(false);
+    startAutoSaveFile();
+    renderStatus();
+    toast('已开启本地文件自动保存！');
+    alert('已开启本地文件自动保存！\n由于浏览器安全限制，网页无法读取完整的磁盘绝对路径。\n当前绑定的文件名为: ' + h.name + '\n请确保不要移动或删除该文件，否则将失去自动备份功能。');
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error(err);
+      if (err.name === 'NotAllowedError') {
+        alert('保存失败：可能因为没有管理员权限或拒绝了授权。\n建议：保存到桌面或用户文件夹下。');
+      }
+    }
+  }
+}
+
+async function recoverPermission() {
+  if (!needsPermission) return;
+  try {
+    var perm = await needsPermission.requestPermission({ mode: 'readwrite' });
+    if (perm === 'granted') {
+      fileHandle = needsPermission;
+      needsPermission = null;
+      await writeToFile(false);
+      startAutoSaveFile();
+      renderStatus();
+      toast('权限已恢复，文件自动保存开启');
+    }
+  } catch(err) {
+    alert('恢复权限失败，请重新选择文件。');
+  }
+}
+
+/* --- 自动保存数据逻辑 --- */
+var cloudSyncTimeout=null;
+
+function saveData() {
+  localStorage.setItem(KEY_ENTRIES, JSON.stringify(entries));
+  localStorage.setItem(KEY_TAGS, JSON.stringify(tags));
+  
+  if (fileHandle) {
+    if (writeTimeout) clearTimeout(writeTimeout);
+    writeTimeout = setTimeout(function() { writeToFile(true); }, 1000); 
+  }
+  
+  if (cloudConfig.token) {
+    if (cloudSyncTimeout) clearTimeout(cloudSyncTimeout);
+    cloudSyncTimeout = setTimeout(function() { pushToCloud(true); }, 2000); 
+  }
+}
+
+function loadData() {
+  try {
+    var eStr=localStorage.getItem(KEY_ENTRIES); if(eStr) entries=JSON.parse(eStr)||[];
+    var tStr=localStorage.getItem(KEY_TAGS); if(tStr) tags=JSON.parse(tStr)||[];
+    var cStr=localStorage.getItem(KEY_CLOUD); if(cStr) cloudConfig=JSON.parse(cStr)||cloudConfig;
+  } catch(err) { console.error(err); }
+  
+  if(!Array.isArray(tags)||!tags.length) tags=JSON.parse(JSON.stringify(DEF_TAGS));
+  if(!tags.find(function(x){return x.key===UNCAT;})) tags.push({key:UNCAT,name:'未分类',color:'#94a3b8'});
+  if(!Array.isArray(entries)) entries=[];
+  
+  entries.forEach(function(e){
+    if(!e.id) e.id = uid('e_');
+    if(!tagByKey(e.type)) e.type=UNCAT;
+    if(e.status === undefined || !STATUS_MAP[e.status]) e.status = e.is_completed ? 'completed' : 'pending';
+    delete e.is_completed;
+    if(e.deadline === undefined) e.deadline = null;
+    if(!e.created_at) e.created_at = new Date().toISOString();
+  });
+}
+
+/* --- 云同步核心 (GitHub Gist) --- */
+async function pushToCloud(silent) {
+  if (!cloudConfig.token) return;
+  
+  var cleanToken = cloudConfig.token.replace(/\s/g, ''); // 清除可能的空格
+  var url = cloudConfig.gistId ? 'https://api.github.com/gists/' + cloudConfig.gistId : 'https://api.github.com/gists';
+  var method = cloudConfig.gistId ? 'PATCH' : 'POST';
+  
+  var payload = {
+    description: 'JiYiXia Data Sync',
+    public: false,
+    files: { 'jiyixia_data.json': { content: JSON.stringify(exportObj()) } }
+  };
+
+  try {
+    var res = await fetch(url, {
+      method: method,
+      headers: {
+        'Authorization': 'token ' + cleanToken,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) {
+      if (res.status === 401) {
+        cloudStatus = 'error';
+        renderStatus();
+        throw new Error('401 Unauthorized\n\n登录失效！请点击下方的「退出登录」后重新登录。');
+      }
+      var errData = await res.json();
+      throw new Error(errData.message || 'HTTP ' + res.status);
+    }
+    
+    var data = await res.json();
+    if (!cloudConfig.gistId) {
+      cloudConfig.gistId = data.id;
+      localStorage.setItem(KEY_CLOUD, JSON.stringify(cloudConfig));
+    }
+    
+    cloudStatus = 'ok';
+    localStorage.setItem(KEY_LAST_SYNC, data.updated_at);
+    renderStatus();
+
+    if (!silent) {
+      toast('✅ 已同步到 GitHub');
+      setTimeout(function() {
+        alert('✅ 本地数据已成功覆盖云端！\n\n云端文件路径: https://gist.github.com/' + cloudConfig.gistId);
+      }, 500);
+    }
+  } catch(e) {
+    console.error('Cloud Push Error:', e);
+    if (!silent) alert('同步失败：\n' + e.message);
+  }
+}
+
+async function pullFromCloud(silent, overwriteLocal) {
+  if (!cloudConfig.token || !cloudConfig.gistId) return false;
+  
+  var cleanToken = cloudConfig.token.replace(/\s/g, '');
+  var url = 'https://api.github.com/gists/' + cloudConfig.gistId;
+  
+  try {
+    var res = await fetch(url, {
+      headers: {
+        'Authorization': 'token ' + cleanToken,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (res.status === 404) return false;
+    if (!res.ok) {
+      if (res.status === 401) {
+        cloudStatus = 'error';
+        renderStatus();
+        throw new Error('登录失效！请点击下方的「退出登录」后重新登录。');
+      }
+      throw new Error('获取失败，状态码 ' + res.status);
+    }
+    
+    var data = await res.json();
+    var file = data.files['jiyixia_data.json'];
+    if (!file || !file.content) throw new Error('云端数据格式不正确');
+    
+    var cloudData = JSON.parse(file.content);
+    if (!cloudData || !cloudData.entries) throw new Error('云端数据无记录');
+    
+    if (overwriteLocal) {
+      entries = cloudData.entries;
+      tags = cloudData.tags || DEF_TAGS;
+      saveData(); renderAll();
+      if(!silent) {
+        toast('✅ 云端已覆盖本地');
+        setTimeout(function() {
+          alert('✅ 云端数据已成功覆盖本地！\n\n来源路径: https://gist.github.com/' + cloudConfig.gistId);
+        }, 500);
+      }
+    } else {
+      var cloudEntries = cloudData.entries;
+      var merged = {};
+      entries.forEach(function(e){ merged[e.id] = e; });
+      
+      cloudEntries.forEach(function(ce){
+        var le = merged[ce.id];
+        if (!le) {
+          merged[ce.id] = ce;
+        } else {
+          var lTime = new Date(le.updated_at || le.created_at).getTime();
+          var cTime = new Date(ce.updated_at || ce.created_at).getTime();
+          if (cTime > lTime) merged[ce.id] = ce;
+        }
+      });
+      entries = Object.values(merged);
+      
+      if (cloudData.tags) {
+        var tMap = {}; tags.forEach(function(t){tMap[t.key]=t;});
+        cloudData.tags.forEach(function(t){ tMap[t.key]=t; });
+        tags = Object.values(tMap);
+      }
+      saveData(); renderAll();
+      if(!silent) toast('✅ 云端已合并到本地');
+    }
+    
+    cloudStatus = 'ok';
+    localStorage.setItem(KEY_LAST_SYNC, data.updated_at);
+    renderStatus();
+    
+    return true;
+  } catch(e) {
+    console.error('Cloud Pull Error:', e);
+    if (!silent) alert('拉取失败：\n' + e.message);
+    return false;
+  }
+}
+
+/* --- 自动检查云端更新 --- */
+setInterval(async () => {
+  if (!cloudConfig.token || !cloudConfig.gistId) return;
+  if (document.hidden) return;
+  
+  var cleanToken = cloudConfig.token.replace(/\s/g, '');
+  try {
+    var res = await fetch('https://api.github.com/gists/' + cloudConfig.gistId, {
+      headers: { 'Authorization': 'token ' + cleanToken, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (res.ok) {
+      var data = await res.json();
+      var localLastSync = localStorage.getItem(KEY_LAST_SYNC);
+      if (localLastSync && data.updated_at > localLastSync) {
+        await pullFromCloud(true, false);
+        toast('🔄 自动拉取了云端的最新数据');
+      }
+    } else if (res.status === 401) {
+      cloudStatus = 'error';
+      renderStatus();
+    }
+  } catch(e) {}
+}, 60000);
+
+/* ================= 工具 ================= */
+function uid(p){return (p||'e_')+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(iso){if(!iso)return '';var d=new Date(iso),p=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
+function toLocalDatetime(iso){var d=new Date(iso),p=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());}
+function tagByKey(k){for(var i=0;i<tags.length;i++)if(tags[i].key===k)return tags[i];return null;}
+function tagName(k){var t=tagByKey(k);return t?t.name:'未分类';}
+function tagColor(k){var t=tagByKey(k);return t?t.color:'#94a3b8';}
+function $(id){return document.getElementById(id);}
+function toast(m){var t=document.createElement('div');t.textContent=m;t.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1b1f24;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;z-index:999';document.body.appendChild(t);setTimeout(function(){t.remove();},3000);}
+
+function getAllProjects() { var ps={}; entries.forEach(function(e){ if(e.project&&e.project!=='未归类'&&e.project.length>=2)ps[e.project]=1; }); return Object.keys(ps).sort(); }
+
+var R_PLAN=/(计划|准备|打算|将要|下周|明天|下月|待办|todo|需要|跟进|排期|要做|目标|预计)/i;
+var R_DONE=/(已完成|完成|搞定|已解决|解决了|已修复|修复|已上线|上线|交付|done|finished|已通过|已关闭|已处理|已确认)/i;
+var R_ISSUE=/(问题|报错|错误|失败|异常|bug|缺陷|风险|阻塞|卡住|疑问|不确定|待查|为什么|求助|故障|崩溃|不兼容|痛点|缺失|遗漏|\?|？)/i;
+
+function classify(text){ var key=UNCAT; if(R_DONE.test(text)&&!R_PLAN.test(text))key='done'; else if(R_PLAN.test(text))key='plan'; else if(R_ISSUE.test(text))key='issue'; return tagByKey(key)?key:UNCAT; }
+function detectProject(text){ var m=text.match(/项目[:：]\s*([^\s，,。；;、]+)/); if(m)return m[1]; m=text.match(/[@#]([^\s，,。；;、]{1,20})/); if(m)return m[1]; var known={}; entries.forEach(function(e){if(e.project&&e.project!=='未归类'&&e.project.length>=2)known[e.project]=1;}); for(var p in known){if(text.toLowerCase().indexOf(p.toLowerCase())>=0)return p;} return '未归类'; }
+
+/* ================= CRUD ================= */
+function addEntry(text){
+  text=(text||'').trim(); if(!text){alert('内容不能为空');return;}
+  var now=new Date().toISOString();
+  var e={ id:uid('e_'), content:text, project:detectProject(text), type:$('inputTagSel').value==='auto'?classify(text):$('inputTagSel').value, created_at:now, updated_at:now, status:'pending', deadline:null };
+  entries.push(e); saveData(); renderAll(); $('inputTagSel').value = 'auto';
+}
+function updateEntry(id,patch){
+  var i=-1; for(var k=0;k<entries.length;k++)if(entries[k].id===id){i=k;break;} if(i<0)return;
+  var e=entries[i]; for(var k2 in patch)e[k2]=patch[k2]; e.updated_at=new Date().toISOString(); saveData(); renderAll();
+}
+function deleteEntry(id){ entries=entries.filter(function(e){return e.id!==id;}); saveData(); renderAll(); }
+
+/* ================= 渲染 ================= */
+function renderAll(){ try{ renderStatus(); renderTabs(); renderInputTagSel(); renderList(); renderTagChecks(); renderProjSel(); renderCloudState(); }catch(err){ console.error(err); $('status').innerHTML='渲染出错：'+esc(err.message); } }
+
+function renderStatus(){
+  var h='本地存储 · 共 <b>'+entries.length+'</b> 条<br>';
+  if (cloudConfig.token && cloudConfig.gistId) {
+    if (cloudStatus === 'error') {
+      h += '☁️ 云同步：<span class="cloud-err">认证失败</span><br>';
+    } else {
+      h += '☁️ 云同步：<span class="cloud-ok">已开启</span> · 多端共享<br>';
+    }
+  } else {
+    h += '☁️ 云同步：<span class="file-warn">未配置</span><br>';
+  }
+  
+  if (fileHandle) h += '💾 文件保存：<span class="file-ok">已开启 ('+fileHandle.name+')</span>';
+  else if (needsPermission) h += '💾 文件保存：<span class="file-warn" style="cursor:pointer;text-decoration:underline" onclick="recoverPermission()">待授权</span>';
+  else h += '💾 文件保存：<span class="file-warn">未开启</span>';
+  $('status').innerHTML = h;
+
+  var lastSync = localStorage.getItem(KEY_LAST_SYNC);
+  if (lastSync && cloudConfig.token) {
+    $('syncTime').style.display = 'block';
+    $('syncTime').innerHTML = '🔄 最后同步时间：' + fmt(lastSync);
+  } else {
+    $('syncTime').style.display = 'none';
+  }
+}
+
+function renderCloudState() {
+  if (cloudConfig.token && cloudStatus === 'ok') {
+    $('cloudLoggedIn').style.display = 'block';
+    $('cloudLoggedOut').style.display = 'none';
+  } else {
+    $('cloudLoggedIn').style.display = 'none';
+    $('cloudLoggedOut').style.display = 'block';
+  }
+}
+
+function renderTabs(){ var counts={}; entries.forEach(function(e){counts[e.type]=(counts[e.type]||0)+1;}); var h='<button data-t="all" class="'+(filter==='all'?'on':'')+'">全部 '+entries.length+'</button>'; tags.forEach(function(t){ var c=counts[t.key]||0; h+='<button data-t="'+t.key+'" class="'+(filter===t.key?'on':'')+'">'+esc(t.name)+' '+c+'</button>'; }); $('tabs').innerHTML=h; var bs=$('tabs').querySelectorAll('button'); for(var i=0;i<bs.length;i++){ (function(b){ b.onclick=function(){ filter=b.getAttribute('data-t'); renderTabs(); renderList(); }; })(bs[i]); } }
+
+function renderInputTagSel() { var sel = $('inputTagSel'), cur = sel.value; var h = '<option value="auto">✨ 自动识别标签</option>'; tags.forEach(function(t) { h += '<option value="'+t.key+'">'+esc(t.name)+'</option>'; }); sel.innerHTML = h; if (cur) sel.value = cur; }
+
+function renderTagChecks(){ var prev={}; var cbs=$('tagChecks').querySelectorAll('input[type=checkbox]'); for(var i=0;i<cbs.length;i++)prev[cbs[i].value]=cbs[i].checked; var h=''; tags.forEach(function(t){ var checked=prev[t.key]===undefined?true:prev[t.key]; h+='<label><input type="checkbox" value="'+t.key+'"'+(checked?' checked':'')+'>'+'<span class="dot" style="background:'+t.color+'"></span>'+esc(t.name)+'</label>'; }); $('tagChecks').innerHTML=h; var newCbs = $('tagChecks').querySelectorAll('input[type=checkbox]'); for(var i=0; i<newCbs.length; i++) { newCbs[i].onchange = updateSelectAllState; } updateSelectAllState(); }
+function updateSelectAllState() { var cbs = $('tagChecks').querySelectorAll('input[type=checkbox]'); var allChecked = cbs.length > 0; for(var i=0; i<cbs.length; i++) { if(!cbs[i].checked) { allChecked = false; break; } } $('selectAllTags').checked = allChecked; }
+$('selectAllTags').onchange = function() { var checked = this.checked; var cbs = $('tagChecks').querySelectorAll('input[type=checkbox]'); for(var i=0; i<cbs.length; i++) { cbs[i].checked = checked; } };
+
+function renderProjSel(){ var sel=$('projSel'),cur=sel.value||'全部'; var arr=['全部'].concat(getAllProjects()); var h=''; arr.forEach(function(p){h+='<option value="'+esc(p)+'">'+esc(p)+'</option>';}); sel.innerHTML=h; if(arr.indexOf(cur)>=0)sel.value=cur; }
+
+function renderList(){
+  var list=entries.slice(); var now = new Date().getTime();
+  function checkOverdue(e){ return e.deadline && e.status !== 'completed' && e.status !== 'voided' && new Date(e.deadline).getTime() < now; }
+  list.sort(function(a,b){ var aOver = checkOverdue(a), bOver = checkOverdue(b); if (aOver && !bOver) return -1; if (!aOver && bOver) return 1; return new Date(b.created_at) - new Date(a.created_at); });
+  if(filter!=='all') list=list.filter(function(e){return e.type===filter;});
+  var el=$('list'); if(!list.length){el.innerHTML='<li class="empty">还没有记录</li>';return;}
+  
+  var h='';
+  list.forEach(function(e){
+    var isOverdue = checkOverdue(e); var statusText = STATUS_MAP[e.status] || '未完成';
+    h+='<li class="item'+(isOverdue?' overdue':'')+'" data-id="'+e.id+'">';
+    if (isOverdue) h+='<div class="overdue-warning">⚠️ 计划已超期，请处理</div>';
+    h+='<p class="content">'+esc(e.content)+'</p><div class="meta">';
+    h+='<span class="pill proj" data-a="proj">'+esc(e.project)+'</span>';
+    if (batchEditMode) { var tagOpts = ''; tags.forEach(function(t) { tagOpts += '<option value="'+t.key+'"'+(e.type===t.key?' selected':'')+'>'+esc(t.name)+'</option>'; }); h += '<select class="pill tag-select" data-a="batch-tag">'+tagOpts+'</select>'; } 
+    else { h += '<span class="pill tag-static" style="background:'+tagColor(e.type)+'">'+esc(tagName(e.type))+'</span>'; }
+    h+='<span class="pill date">'+fmt(e.created_at)+'</span>';
+    if (e.deadline) h+='<span class="pill deadline">截止: '+fmt(e.deadline)+' ('+statusText+')</span>'; else if (e.status !== 'pending') h+='<span class="pill deadline">'+statusText+'</span>';
+    h+='</div>';
+    if (isOverdue) { h+='<div class="overdue-actions"><button class="btn-complete" data-a="complete">标记完成</button><button class="btn-void" data-a="void">标记作废</button><button class="btn-progress" data-a="progress">正在进行（重设时间）</button></div>'; }
+    h+='<div class="actions"><span style="flex:1"></span><button data-a="edit">编辑</button><button data-a="del">删除</button></div></li>';
+  });
+  el.innerHTML=h;
+
+  var items=el.querySelectorAll('.item');
+  for(var i=0;i<items.length;i++){
+    (function(li){
+      var id=li.getAttribute('data-id'); var entry=null; for(var k=0;k<entries.length;k++)if(entries[k].id===id){entry=entries[k];break;} if(!entry)return;
+      var p=li.querySelector('[data-a="proj"]'); if(p)p.onclick=function(){ openProjModal(id, entry.project); };
+      var d=li.querySelector('[data-a="del"]'); if(d)d.onclick=function(){ if(confirm('删除这条记录？'))deleteEntry(id); };
+      var ed=li.querySelector('[data-a="edit"]'); if(ed)ed.onclick=function(){openEdit(id);};
+      var sel=li.querySelector('[data-a="batch-tag"]'); if(sel) sel.onchange=function(){ updateEntry(id, {type: this.value}); };
+      var c=li.querySelector('[data-a="complete"]'); if(c)c.onclick=function(){ updateEntry(id, {status: 'completed'}); toast('已标记为完成'); };
+      var v=li.querySelector('[data-a="void"]'); if(v)v.onclick=function(){ updateEntry(id, {status: 'voided'}); toast('已标记为作废'); };
+      var prog=li.querySelector('[data-a="progress"]'); if(prog)prog.onclick=function(){ openRescheduleModal(id, entry.deadline); };
+    })(items[i]);
+  }
+}
+
+/* ================= 弹窗 ================= */
+function openRescheduleModal(id, currentDeadline) {
+  var m = document.createElement('div'); m.className = 'modal show';
+  var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(18, 0, 0, 0);
+  m.innerHTML = '<div class="dialog"><div class="dialog-head"><h3>正在进行：重设计划完成时间</h3><button data-x="close">关闭</button></div><div class="dialog-body"><div class="field"><label>新的计划完成时间</label><input type="datetime-local" id="newDeadline" value="' + (currentDeadline ? toLocalDatetime(currentDeadline) : toLocalDatetime(d.toISOString())) + '"></div></div><div class="dialog-foot"><button data-x="cancel">取消</button><button class="primary" data-x="save">保存</button></div></div>';
+  document.body.appendChild(m);
+  var close = function() { m.remove(); }; m.querySelector('[data-x=close]').onclick = close; m.querySelector('[data-x=cancel]').onclick = close; m.addEventListener('click', function(e) { if (e.target === m) close(); });
+  m.querySelector('[data-x=save]').onclick = function() { var val = m.querySelector('#newDeadline').value; if (!val) { alert('请选择新的完成时间'); return; } updateEntry(id, { deadline: new Date(val).toISOString(), status: 'in_progress' }); close(); toast('已重设时间，状态改为进行中'); };
+  setTimeout(function() { m.querySelector('#newDeadline').focus(); }, 50);
+}
+
+function openProjModal(id, currentProject) {
+  var m = document.createElement('div'); m.className = 'modal show'; var projs = getAllProjects();
+  var h = '<div class="dialog"><div class="dialog-head"><h3>设置项目</h3><button data-x="close">关闭</button></div><div class="dialog-body"><div class="field"><label>项目名称（留空为“未归类”）</label><input type="text" id="projInput" value="'+(currentProject === '未归类' ? '' : esc(currentProject))+'" placeholder="输入新项目名..."></div>';
+  if (projs.length) { h += '<div class="field"><label>已有项目（点击直接填入）</label><div class="proj-pills">'; projs.forEach(function(p) { h += '<span class="proj-pill" data-p="'+esc(p)+'">'+esc(p)+'</span>'; }); h += '</div></div>'; }
+  h += '</div><div class="dialog-foot"><button data-x="cancel">取消</button><button class="primary" data-x="save">保存</button></div></div>';
+  m.innerHTML = h; document.body.appendChild(m);
+  var close = function() { m.remove(); }; m.querySelector('[data-x=close]').onclick = close; m.querySelector('[data-x=cancel]').onclick = close; m.addEventListener('click', function(e) { if (e.target === m) close(); });
+  var pills = m.querySelectorAll('.proj-pill'); for (var i = 0; i < pills.length; i++) { (function(pill) { pill.onclick = function() { m.querySelector('#projInput').value = pill.getAttribute('data-p'); }; })(pills[i]); }
+  m.querySelector('[data-x=save]').onclick = function() { updateEntry(id, { project: m.querySelector('#projInput').value.trim() || '未归类' }); close(); };
+  setTimeout(function() { m.querySelector('#projInput').focus(); }, 50);
+}
+
+function openEdit(id){
+  var entry=null; for(var i=0;i<entries.length;i++)if(entries[i].id===id){entry=entries[i];break;} if(!entry)return;
+  var typeOpts = ''; tags.forEach(function(t){ typeOpts += '<option value="'+t.key+'"'+(entry.type===t.key?' selected':'')+'>'+esc(t.name)+'</option>'; });
+  var statusOpts = ''; for (var k in STATUS_MAP) { statusOpts += '<option value="'+k+'"'+(entry.status===k?' selected':'')+'>'+STATUS_MAP[k]+'</option>'; }
+  var showDeadlineField = (entry.type === 'plan' || entry.deadline);
+  var m=document.createElement('div'); m.className='modal show';
+  m.innerHTML='<div class="dialog"><div class="dialog-head"><h3>编辑记录</h3><button data-x="close">关闭</button></div><div class="dialog-body">'+
+    '<div class="field"><label>内容</label><textarea id="editText" style="min-height:100px">'+esc(entry.content)+'</textarea></div>'+
+    '<div class="field"><label>标签类型</label><select id="editType">'+typeOpts+'</select></div>'+
+    '<div class="field"><label>首次记录时间</label><input type="datetime-local" id="editCreatedAt" value="'+toLocalDatetime(entry.created_at)+'"></div>'+
+    '<div id="planFields" style="display:'+(showDeadlineField?'block':'none')+'"><div class="field"><label>计划完成时间</label><input type="datetime-local" id="editDeadline" value="'+(entry.deadline ? toLocalDatetime(entry.deadline) : '')+'"></div><div class="field"><label>任务状态</label><select id="editStatus">'+statusOpts+'</select></div></div>'+
+    '</div><div class="dialog-foot"><button data-x="cancel">取消</button><button class="primary" data-x="save">保存</button></div></div>';
+  document.body.appendChild(m);
+  function close(){m.remove();} m.querySelector('[data-x=close]').onclick=close; m.querySelector('[data-x=cancel]').onclick=close;
+  m.querySelector('#editType').onchange = function() { m.querySelector('#planFields').style.display = this.value === 'plan' ? 'block' : 'none'; };
+  m.querySelector('[data-x=save]').onclick=function(){
+    var t=m.querySelector('#editText').value.trim(); if(!t){alert('内容不能为空');return;}
+    var newTimeVal=m.querySelector('#editCreatedAt').value; var dlVal = m.querySelector('#editDeadline').value;
+    updateEntry(id,{ content:t, type:m.querySelector('#editType').value, created_at:newTimeVal ? new Date(newTimeVal).toISOString() : entry.created_at, deadline:dlVal ? new Date(dlVal).toISOString() : null, status:m.querySelector('#editStatus').value });
+    close();toast('已保存');
+  };
+  m.addEventListener('click',function(e){if(e.target===m)close();}); setTimeout(function(){m.querySelector('#editText').focus();},50);
+}
+
+/* ================= 导出/导入/同步相关 ================= */
+function exportObj(){return {version:3,app:'记一下',exported_at:new Date().toISOString(),cloud:cloudConfig,tags:tags,entries:entries};}
+
+$('btnExport').onclick=function(){ var blob=new Blob([JSON.stringify(exportObj(),null,2)],{type:'application/json'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='jiyixia-'+Date.now()+'.json'; a.click(); };
+$('btnExportTxt').onclick=function(){ if(!entries.length){alert('当前没有记录');return;} var txt = '=== 记一下 数据导出 ===\n导出时间：' + new Date().toLocaleString() + '\n\n'; var sorted = entries.slice().sort(function(a,b){ return new Date(b.created_at) - new Date(a.created_at); }); sorted.forEach(function(e){ var pName = e.project || '未归类'; var tName = tagName(e.type); var timeStr = fmt(e.created_at); txt += '[' + pName + '] | [' + tName + '] | ' + timeStr + '\n'; txt += '内容：\n' + e.content + '\n'; if(e.deadline) txt += '截止时间：' + fmt(e.deadline) + ' (' + STATUS_MAP[e.status] + ')\n'; txt += '----------------------------------------\n'; }); var blob = new Blob([txt], {type: 'text/plain;charset=utf-8'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '记一下_纯文本_' + new Date().toISOString().slice(0,10) + '.txt'; a.click(); };
+$('btnImport').onclick=function(){$('fileInput').click();};
+$('fileInput').onchange=function(){ var f=$('fileInput').files[0];if(!f)return; var r=new FileReader(); r.onload=function(){ try{ var d=JSON.parse(r.result); var arr=Array.isArray(d)?d:(d.entries||[]); if(!Array.isArray(arr))throw new Error('格式不对'); 
+      if(d.cloud && d.cloud.token){ cloudConfig = d.cloud; localStorage.setItem(KEY_CLOUD, JSON.stringify(cloudConfig)); cloudStatus='ok'; }
+      if(d.tags&&Array.isArray(d.tags)){ var exist={};tags.forEach(function(t){exist[t.key]=1;}); d.tags.forEach(function(t){ if(t&&t.key&&!exist[t.key]&&t.key!==UNCAT){ tags.push({key:t.key,name:String(t.name||'标签'),color:String(t.color||'#6b7280')}); exist[t.key]=1; } }); } 
+      var ex={};entries.forEach(function(e){ex[e.id]=1;}); var n=0; arr.forEach(function(raw){ if(!raw||!raw.content||(raw.id&&ex[raw.id]))return; var content=String(raw.content); var type=raw.type; if(!tagByKey(type))type=UNCAT; entries.push({ id:raw.id||uid('e_'),content:content, project:raw.project||detectProject(content), type:type, created_at:raw.created_at||new Date().toISOString(), updated_at:raw.updated_at||raw.created_at||new Date().toISOString(), deadline: raw.deadline || null, status: raw.status || 'pending' }); n++; }); 
+      saveData(); renderAll(); 
+      if (cloudConfig.token) toast('✅ 导入成功，并已自动恢复云同步配置'); else toast('导入 '+n+' 条');
+    }catch(err){alert('导入失败：'+err.message);} $('fileInput').value=''; }; r.readAsText(f); };
+$('btnPayload').onclick=function(){ var sum=buildSummary({from:-Infinity,to:Infinity,project:'全部',tagKeys:tags.map(function(t){return t.key;})}); var payload={role:'analyst',task:'汇总并总结以下记录',instructions:['按标签分组整理。','关注高频问题、未完成计划、已完成成果。'],data:sum}; copyText(JSON.stringify(payload,null,2)).then(function(ok){ toast(ok?'已复制全部记录':'复制失败'); }); };
+$('btnClear').onclick=function(){ if(!confirm('确认清空全部记录？不可恢复！'))return; entries=[]; saveData(); renderAll(); toast('已清空'); };
+
+/* ================= 汇总逻辑 ================= */
+$('rangeSel').onchange=function(){ $('customDates').style.display=this.value==='custom'?'flex':'none'; };
+function rangeOf(key){ var n=new Date(); if(key==='week'){ var d=new Date(n); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return {from:d.getTime(),to:Infinity}; } if(key==='month'){ return {from:new Date(n.getFullYear(),n.getMonth(),1).getTime(),to:Infinity}; } return {from:-Infinity,to:Infinity}; }
+$('btnSum').onclick=function(){ try{ var rk=$('rangeSel').value,from,to; if(rk==='custom'){ var fv=$('dateFrom').value,tv=$('dateTo').value; from=fv?new Date(fv+'T00:00:00').getTime():-Infinity; to=tv?new Date(tv+'T23:59:59').getTime():Infinity; }else{ var r=rangeOf(rk);from=r.from;to=r.to; } var cbs=$('tagChecks').querySelectorAll('input[type=checkbox]:checked'); var keys=[]; for(var i=0;i<cbs.length;i++)keys.push(cbs[i].value); if(!keys.length){alert('请至少勾选一个标签类型');return;} renderSummary(buildSummary({from:from,to:to,project:$('projSel').value||'全部',tagKeys:keys})); }catch(err){ console.error(err); alert('汇总出错：'+err.message); } };
+
+function buildSummary(opts){
+  var from=opts.from,to=opts.to,project=opts.project,keys=opts.tagKeys;
+  var list=entries.filter(function(e){ var t=new Date(e.created_at).getTime(); if(t<from||t>to)return false; if(project!=='全部'&&e.project!==project)return false; if(keys.indexOf(e.type)<0)return false; return true; });
+  var groups={}; keys.forEach(function(k){groups[k]=[];}); list.forEach(function(e){ if(!groups[e.type])groups[e.type]=[]; groups[e.type].push(e); });
+  var counts={}; keys.forEach(function(k){counts[k]=groups[k].length;});
+  return { meta:{total:list.length}, tags:tags.filter(function(t){return keys.indexOf(t.key)>=0;}).map(function(t){return {key:t.key,name:t.name,color:t.color};}), counts:counts, groups:tags.filter(function(t){return keys.indexOf(t.key)>=0&&groups[t.key]&&groups[t.key].length;}).map(function(t){ return { key:t.key, name:t.name, color:t.color, count:groups[t.key].length, items:groups[t.key].slice().sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at);}).map(function(e){ return { id:e.id, content:e.content, created_at:e.created_at, deadline:e.deadline, status:e.status }; }) }; }) };
+}
+
+function renderSummary(sum){
+  var box=$('result'); if(!sum.meta.total){box.innerHTML='<div class="empty">该条件下没有记录</div>';return;}
+  var h='<div class="stat">'; sum.tags.forEach(function(t){ h+='<span style="background:'+t.color+'22;color:'+t.color+'">'+esc(t.name)+' '+(sum.counts[t.key]||0)+'</span>'; }); h+='<span class="pill">合计 '+sum.meta.total+'</span></div>';
+  sum.groups.forEach(function(g){ h+='<div class="group"><h4><span class="dot" style="background:'+g.color+'"></span>'+esc(g.name)+' ('+g.count+')</h4><ul>'; g.items.forEach(function(i){ var statusStr = i.deadline ? ' · 截止:'+fmt(i.deadline)+' ('+(STATUS_MAP[i.status]||'未完成')+')' : ''; h+='<li><span class="time">'+fmt(i.created_at)+statusStr+'</span><span class="text">'+esc(i.content)+'</span></li>'; }); h+='</ul></div>'; });
+  h+='<div class="row" style="margin-top:8px"><button class="primary" id="sumCopy" style="flex:1">复制给 AI</button></div>'; box.innerHTML=h;
+  $('sumCopy').onclick=function(){ var payload={role:'analyst',task:'按标签汇总并总结以下记录',data:sum}; copyText(JSON.stringify(payload,null,2)).then(function(ok){ toast(ok?'已复制':'复制失败'); }); };
+}
+
+/* ================= 其他工具 ================= */
+function copyText(t){ if(navigator.clipboard&&navigator.clipboard.writeText){ return navigator.clipboard.writeText(t).then(function(){return true;}).catch(function(){return fallbackCopy(t);}); } return Promise.resolve(fallbackCopy(t)); }
+function fallbackCopy(t){ var ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;top:0;left:0;opacity:0'; document.body.appendChild(ta); ta.select(); var ok=false; try{ok=document.execCommand('copy');}catch(e){} document.body.removeChild(ta); return ok; }
+
+$('showDate').onchange=function(){ $('wrap').classList.toggle('hide-date',!$('showDate').checked); };
+$('batchEdit').onchange=function(){ batchEditMode = this.checked; renderList(); };
+$('btnAdd').onclick=function(){ var v=$('input').value; if(!v.trim()){alert('请先写内容');return;} addEntry(v); $('input').value='';$('input').focus(); };
+$('input').addEventListener('keydown',function(e){ if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();$('btnAdd').click();} });
+
+/* 标签管理 */
+function openTagModal(){ editingTags=JSON.parse(JSON.stringify(tags)); renderTagModal(); $('tagModal').classList.add('show'); }
+function renderTagModal(){ var h=''; editingTags.forEach(function(t,i){ var fixed=t.key===UNCAT; h+='<div class="trow" data-i="'+i+'"><input type="color" value="'+t.color+'" data-f="color"'+(fixed?' disabled':'')+'><input type="text" value="'+esc(t.name)+'" data-f="name"'+(fixed?' disabled':'')+'>'+(fixed?'<span class="fixed">固定</span>':'<button class="danger" data-a="del">删除</button>')+'</div>'; }); $('tagList').innerHTML=h; var rows=$('tagList').querySelectorAll('.trow'); for(var i=0;i<rows.length;i++){ (function(row){ var idx=+row.getAttribute('data-i'); var ins=row.querySelectorAll('input'); for(var j=0;j<ins.length;j++){ (function(inp){ inp.oninput=function(){ editingTags[idx][inp.getAttribute('data-f')]=inp.value; }; })(ins[j]); } var d=row.querySelector('[data-a=del]'); if(d)d.onclick=function(){ var n=entries.filter(function(x){return x.type===editingTags[idx].key;}).length; if(n>0&&!confirm('有 '+n+' 条记录将变为未分类，继续？'))return; editingTags.splice(idx,1); renderTagModal(); }; })(rows[i]); } }
+$('tagAdd').onclick=function(){ var used={}; editingTags.forEach(function(t){used[t.color]=1;}); var color=COLORS[0]; for(var i=0;i<COLORS.length;i++)if(!used[COLORS[i]]){color=COLORS[i];break;} editingTags.push({key:uid('t_'),name:'新标签',color:color}); renderTagModal(); };
+$('tagSave').onclick=function(){ for(var i=0;i<editingTags.length;i++){ if(!editingTags[i].name.trim()){alert('标签名不能为空');return;} } var names=editingTags.map(function(t){return t.name.trim();}); var s={}; names.forEach(function(n){s[n]=1;}); if(Object.keys(s).length!==names.length){alert('标签名不能重复');return;} editingTags.forEach(function(t){t.name=t.name.trim();}); var removed=tags.map(function(t){return t.key;}).filter(function(k){return !editingTags.find(function(t){return t.key===k;});}); if(removed.length) entries.forEach(function(e){ if(removed.indexOf(e.type)>=0){e.type=UNCAT;e.updated_at=new Date().toISOString();} }); tags=editingTags; saveData(); $('tagModal').classList.remove('show'); renderAll(); toast('标签已保存'); };
+$('btnTags').onclick=openTagModal; $('tagClose').onclick=function(){$('tagModal').classList.remove('show');}; $('tagModal').onclick=function(e){if(e.target===$('tagModal'))$('tagModal').classList.remove('show');};
+
+/* --- 本地存文件按钮 --- */
+$('btnAutoSave').onclick = selectAutoSaveFile;
+
+/* --- 云同步/登录弹窗 --- */
+$('btnCloud').onclick=function(){ renderCloudState(); $('cloudModal').classList.add('show'); };
+$('cloudClose').onclick=function(){ $('cloudModal').classList.remove('show'); };
+$('cloudModal').onclick=function(e){ if(e.target===$('cloudModal'))$('cloudModal').classList.remove('show'); };
+
+// 一键登录
+$('cloudSave').onclick=async function(){
+  var token = $('cloudToken').value.trim().replace(/\s/g, ''); // 清理所有空格和换行
+  if (!token) { alert('请先粘贴授权代码 (Token)'); return; }
+  
+  var btn = this;
+  btn.innerHTML = '登录中...';
+  btn.disabled = true;
+
+  try {
+    // 1. 先测试 Token 是否有效
+    var testRes = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    
+    if (testRes.status === 401) {
+      throw new Error('认证失败 (401)！\n\n可能原因：\n1. Token 复制错误（多复制了空格或漏了字母）。\n2. Token 已被删除或过期。\n3. 账号刚注册，被 GitHub 限制。');
+    }
+    if (!testRes.ok) {
+       throw new Error('验证失败，状态码：' + testRes.status);
+    }
+
+    // 2. Token 有效，开始保存并同步
+    cloudConfig.token = token;
+    cloudConfig.gistId = ''; // 重置旧的，自动创建新的
+    cloudStatus = 'ok';
+    localStorage.setItem(KEY_CLOUD, JSON.stringify(cloudConfig));
+    
+    toast('验证成功，正在创建云端数据...');
+    
+    await pushToCloud(true);
+    if (cloudStatus === 'error') throw new Error('云端创建失败，可能是 Token 没有 gist 权限。');
+
+    toast('✅ 登录成功');
+    renderStatus();
+    renderCloudState();
+    
+    // 强制拉取一次最新数据
+    await pullFromCloud(true, false);
+    
+  } catch(e) {
+    alert('登录失败：\n' + e.message);
+    cloudConfig.token = '';
+    cloudStatus = 'error';
+    localStorage.removeItem(KEY_CLOUD);
+    renderStatus();
+  } finally {
+    btn.innerHTML = '登录';
+    btn.disabled = false;
+  }
+};
+
+// 退出登录
+$('cloudClear').onclick=function(){
+  if(!confirm('确认退出登录并清除云同步信息？')) return;
+  cloudConfig = { token: '', gistId: '' };
+  cloudStatus = 'ok';
+  localStorage.removeItem(KEY_CLOUD);
+  localStorage.removeItem(KEY_LAST_SYNC);
+  $('cloudToken').value = '';
+  renderStatus(); renderCloudState();
+  toast('已退出登录');
+};
+
+$('cloudPush').onclick=function(){ pushToCloud(false); };
+$('cloudPull').onclick=function(){ if(confirm('这将用云端数据覆盖本地全部记录，继续吗？')) { pullFromCloud(false, true); } };
+
+// 复制恢复码
+$('btnCopyConfig').onclick = function() {
+  if(!cloudConfig.token) { alert('尚未登录'); return; }
+  var code = btoa(JSON.stringify(cloudConfig));
+  copyText(code).then(function(ok){
+    if(ok) alert('登录凭证已复制！\n请妥善保存。下次清空缓存后，可以使用「使用恢复码登录」粘贴此代码恢复。\n\n代码：\n' + code);
+  });
+};
+
+// 使用恢复码
+$('btnPasteConfig').onclick = function() {
+  var code = prompt('请粘贴之前复制的恢复码：');
+  if(!code) return;
+  try {
+    var cfg = JSON.parse(atob(code));
+    if(cfg.token) {
+      $('cloudToken').value = cfg.token;
+      $('cloudSave').click(); // 触发登录逻辑
+    }
+  } catch(e) {
+    alert('恢复码无效');
+  }
+};
+
+/* ================= 启动 ================= */
+(async function init(){
+  loadData();
+  renderAll();
+  await initFileHandle();
+  $('input').focus();
+  
+  if (cloudConfig.token && cloudConfig.gistId) {
+    pullFromCloud(true, false);
+  }
+})();
+</script>
+</body>
+</html>
